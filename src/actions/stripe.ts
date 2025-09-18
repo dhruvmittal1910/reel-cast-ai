@@ -6,7 +6,7 @@ import { db } from "~/server/db"
 import { redirect } from "next/navigation"
 
 const stripe=new Stripe(env.STRIPE_SECRET_KEY,{
-    apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
+    apiVersion: "2025-08-27.basil" as Stripe.LatestApiVersion,
 })
 
 export type PriceId="small"|"medium"|"large"
