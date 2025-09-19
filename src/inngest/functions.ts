@@ -3,12 +3,6 @@ import { inngest } from "./client";
 import { db } from "~/server/db";
 import {ListObjectsV2Command, S3Client} from "@aws-sdk/client-s3"
 
-type ProcessVideoEvent = {
-  name: "process-video-events";
-  data: {
-    uploadedFileId: string;
-  };
-};
 
 // queue will contain the events
 // functions that will triggered from the queue
@@ -24,13 +18,11 @@ export const processVideo = inngest.createFunction(
     ]
   },
   { event: "process-video-events" },
-  async ({ event, step }: {
-    event: ProcessVideoEvent;
-    step: {
-      run<T>(name: string, fn: () => Promise<T>): Promise<T>;
+  async ({ event, step }) => {
+    const { uploadedFileId } = event.data as {
+      uploadedFileId: string;
+      userId: string;
     };
-  }) => {
-    const { uploadedFileId } = event.data
 
     // inside the try cathc block inorder to do faulure handling as shown in inngest docs under step errors
     try{
@@ -74,15 +66,13 @@ export const processVideo = inngest.createFunction(
           })
         })
 
-        await step.run("call-modal-endpoint", async () => {
-          await fetch(env.PROCESS_VIDEO_ENDPOINT, {
-            method: "POST",
-            body: JSON.stringify({ s3_key: s3Key }), //hardcoding the s3key for now
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${env.PROCESS_VIDEO_ENDPOINT_AUTH}`
-            }
-          })
+        await step.fetch(env.PROCESS_VIDEO_ENDPOINT, {
+          method: "POST",
+          body: JSON.stringify({ s3_key: s3Key }), //hardcoding the s3key for now
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.PROCESS_VIDEO_ENDPOINT_AUTH}`
+          }
         })
 
         // after modal endpoint is hit then more clips are added to the s3 bucket
